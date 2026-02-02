@@ -155,7 +155,7 @@
       "columns": [
         { "name": "id", "type": "bigint" },
         { "name": "expense_name", "type": "varchar(150)" },
-        { "name": "status", "type": "int(1)" }
+        { "name": "status", "type": "int(1)" },
         { "name": "charge_code", "type": "varchar(100)" }
       ],
       "foreign_keys": [],
