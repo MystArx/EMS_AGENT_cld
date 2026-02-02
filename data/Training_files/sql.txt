@@ -1,0 +1,137 @@
+-- ==============================
+-- INVOICE COUNT ANALYTICS
+-- ==============================
+
+SELECT ai.account_name, COUNT(ii.id) AS invoice_count
+FROM `ems-account-service`.`account_info` ai
+JOIN `ems-portal-service`.`invoice_info` ii
+  ON ai.id = ii.account_id
+GROUP BY ai.account_name
+ORDER BY invoice_count DESC
+LIMIT ?;
+
+SELECT ai.account_name, COUNT(ii.id) AS invoice_count
+FROM `ems-account-service`.`account_info` ai
+JOIN `ems-portal-service`.`invoice_info` ii
+  ON ai.id = ii.account_id
+WHERE ii.invoice_date >= DATE_SUB(CURDATE(), INTERVAL ? MONTH)
+GROUP BY ai.account_name
+ORDER BY invoice_count DESC
+LIMIT ?;
+
+SELECT ai.account_name, COUNT(ii.id) AS invoice_count
+FROM `ems-account-service`.`account_info` ai
+JOIN `ems-portal-service`.`invoice_info` ii
+  ON ai.id = ii.account_id
+WHERE ii.invoice_date >= DATE_FORMAT(CURDATE() - INTERVAL ? WEEK, ?)
+  AND ii.invoice_date < DATE_FORMAT(CURDATE(), ?)
+GROUP BY ai.account_name
+ORDER BY invoice_count DESC
+LIMIT ?;
+
+
+-- ==============================
+-- INVOICE COUNT TREND
+-- ==============================
+
+SELECT ai.account_name,
+       DATE_FORMAT(ii.invoice_date, ?) AS invoice_month,
+       COUNT(DISTINCT ii.id) AS invoice_count
+FROM `ems-account-service`.`account_info` ai
+JOIN `ems-portal-service`.`invoice_info` ii
+  ON ai.id = ii.account_id
+WHERE ii.invoice_date >= DATE_SUB(CURDATE(), INTERVAL ? MONTH)
+GROUP BY ai.account_name, invoice_month
+ORDER BY ai.account_name, invoice_month
+LIMIT ?;
+
+
+-- ==============================
+-- COMPARATIVE ACCOUNT PERFORMANCE
+-- ==============================
+
+SELECT ai.account_name
+FROM `ems-account-service`.`account_info` ai
+JOIN `ems-portal-service`.`invoice_info` ii
+  ON ai.id = ii.account_id
+GROUP BY ai.account_name
+HAVING COUNT(ii.id) <
+(
+  SELECT COUNT(*)
+  FROM `ems-portal-service`.`invoice_info`
+  WHERE account_id =
+    (
+      SELECT id
+      FROM `ems-account-service`.`account_info`
+      WHERE LOWER(account_name) LIKE LOWER(?)
+    )
+    AND invoice_date >= DATE_SUB(CURDATE(), INTERVAL ? MONTH)
+)
+LIMIT ?;
+
+
+-- ==============================
+-- TOTAL INVOICE AMOUNT ANALYTICS
+-- ==============================
+
+SELECT ai.account_name,
+       SUM(ii.total_amount) AS total_invoice_amount
+FROM `ems-portal-service`.`invoice_info` ii
+JOIN `ems-account-service`.`account_info` ai
+  ON ii.account_id = ai.id
+GROUP BY ai.account_name
+ORDER BY total_invoice_amount DESC
+LIMIT ?;
+
+SELECT SUM(ii.total_amount) AS total_invoice_amount
+FROM `ems-portal-service`.`invoice_info` ii
+JOIN `ems-account-service`.`account_info` ai
+  ON ii.account_id = ai.id
+WHERE LOWER(ai.account_name) LIKE LOWER(?)
+LIMIT ?;
+
+
+-- ==============================
+-- GEOGRAPHY-BASED INVOICE ANALYTICS (QCM)
+-- ==============================
+
+SELECT SUM(ii.total_amount) AS total_invoice_amount
+FROM `ems-portal-service`.`invoice_info` ii
+JOIN `ems-warehouse-service`.`warehouse_info` wi
+  ON ii.warehouse_id = wi.id
+JOIN `ems-portal-service`.`quick_code_master` qcm
+  ON wi.city_id = qcm.id
+WHERE qcm.name LIKE ?
+LIMIT ?;
+
+SELECT SUM(ii.total_amount) AS total_invoice_amount
+FROM `ems-portal-service`.`invoice_info` ii
+JOIN `ems-warehouse-service`.`warehouse_info` wi
+  ON ii.warehouse_id = wi.id
+JOIN `ems-portal-service`.`quick_code_master` qcm
+  ON wi.zone_id = qcm.id
+WHERE qcm.name = ?
+LIMIT ?;
+
+SELECT SUM(ii.total_amount) AS total_invoice_amount
+FROM `ems-portal-service`.`invoice_info` ii
+JOIN `ems-warehouse-service`.`warehouse_info` wi
+  ON ii.warehouse_id = wi.id
+WHERE wi.city_id IN
+(
+  SELECT id
+  FROM `ems-portal-service`.`quick_code_master`
+  WHERE name = ?
+)
+LIMIT ?;
+
+
+-- ==============================
+-- BASIC GLOBAL METRICS
+-- ==============================
+
+SELECT COUNT(ii.id) AS total_invoice_count
+FROM `ems-portal-service`.`invoice_info` ii;
+
+SELECT SUM(ii.total_amount) AS total_invoice_amount
+FROM `ems-portal-service`.`invoice_info` ii;

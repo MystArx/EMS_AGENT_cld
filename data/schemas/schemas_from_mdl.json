@@ -1,0 +1,218 @@
+{
+  "entities": {
+
+    "ems-account-service.account_info": {
+      "schema": "ems-account-service",
+      "table": "account_info",
+      "columns": [
+        { "name": "id", "type": "bigint" },
+        { "name": "account_code", "type": "varchar(25)" },
+        { "name": "account_name", "type": "varchar(150)" },
+        { "name": "status", "type": "int(1)" },
+        { "name": "state_id", "type": "bigint" },
+        { "name": "city_id", "type": "bigint" },
+        { "name": "industry_id", "type": "bigint" },
+        { "name": "zone_id", "type": "bigint" }
+      ],
+      "foreign_keys": [],
+      "unique_keys": [
+        {
+          "name": "account_name",
+          "columns": ["account_name"]
+        }
+      ]
+    },
+
+    "ems-account-service.account_warehouse_info": {
+      "schema": "ems-account-service",
+      "table": "account_warehouse_info",
+      "columns": [
+        { "name": "id", "type": "bigint" },
+        { "name": "account_info_id", "type": "bigint" },
+        { "name": "warehouse_id", "type": "bigint" },
+        { "name": "status", "type": "int(2)" },
+        { "name": "start_date", "type": "datetime" },
+        { "name": "closing_date", "type": "datetime" },
+        { "name": "zone_id", "type": "bigint" },
+        { "name": "industry_id", "type": "bigint" }
+      ],
+      "foreign_keys": [
+        {
+          "column": "account_info_id",
+          "references": "account_info.id"
+        }
+      ],
+      "unique_keys": [
+        {
+          "name": "account_info_id__warehouse_id",
+          "columns": ["account_info_id", "warehouse_id"]
+        }
+      ]
+    },
+
+    "ems-account-service.account_expense_mapping": {
+      "schema": "ems-account-service",
+      "table": "account_expense_mapping",
+      "columns": [
+        { "name": "account_warehouse_id", "type": "bigint" },
+        { "name": "expense_id", "type": "bigint" }
+      ],
+      "foreign_keys": [
+        {
+          "column": "account_warehouse_id",
+          "references": "account_warehouse_info.id"
+        }
+      ],
+      "unique_keys": []
+    },
+
+    "ems-warehouse-service.warehouse_info": {
+      "schema": "ems-warehouse-service",
+      "table": "warehouse_info",
+      "columns": [
+        { "name": "id", "type": "bigint" },
+        { "name": "warehouse_code", "type": "varchar(25)" },
+        { "name": "warehouse_name", "type": "varchar(150)" },
+        { "name": "warehouse_type", "type": "enum('MULTI_USER','STAND_ALONE')" },
+        { "name": "start_date", "type": "datetime" },
+        { "name": "closing_date", "type": "datetime" },
+        { "name": "status", "type": "smallint(1)" },
+        { "name": "city_id", "type": "bigint" },
+        { "name": "state_id", "type": "bigint" },
+        { "name": "zone_id", "type": "bigint" },
+        { "name": "region_id", "type": "bigint" },
+        { "name": "ownership_type_id", "type": "bigint" }
+      ],
+      "foreign_keys": [],
+      "unique_keys": [
+        { "name": "warehouse_code", "columns": ["warehouse_code"] },
+        { "name": "warehouse_name", "columns": ["warehouse_name"] }
+      ]
+    },
+
+    "ems-warehouse-service.warehouse_expense_mapping": {
+      "schema": "ems-warehouse-service",
+      "table": "warehouse_expense_mapping",
+      "columns": [
+        { "name": "warehouse_id", "type": "bigint" },
+        { "name": "expense_id", "type": "bigint" }
+      ],
+      "foreign_keys": [
+        {
+          "column": "warehouse_id",
+          "references": "warehouse_info.id"
+        }
+      ],
+      "unique_keys": []
+    },
+
+    "ems-portal-service.invoice_info": {
+      "schema": "ems-portal-service",
+      "table": "invoice_info",
+      "columns": [
+        { "name": "id", "type": "bigint" },
+        { "name": "financial_year_id", "type": "bigint" },
+        { "name": "account_id", "type": "bigint" },
+        { "name": "warehouse_id", "type": "bigint" },
+        { "name": "invoice_date", "type": "date" },
+        { "name": "invoice_month", "type": "varchar(20)" },
+        { "name": "invoice_status", "type": "int(1)" },
+        { "name": "approval_status", "type": "bigint" },
+        { "name": "expense_mode_id", "type": "bigint" },
+        { "name": "invoice_expense_type", "type": "varchar(20)" },
+        { "name": "internal_invoice_number", "type": "varchar(50)" },
+        { "name": "vendor_id", "type": "bigint" },
+        { "name": "created_by", "type": "bigint" },
+        { "name": "updated_by", "type": "bigint" }
+      ],
+      "foreign_keys": [],
+      "unique_keys": []
+    },
+
+    "ems-portal-service.invoice_line_items": {
+      "schema": "ems-portal-service",
+      "table": "invoice_line_items",
+      "columns": [
+        { "name": "id", "type": "bigint" },
+        { "name": "invoice_id", "type": "bigint" },
+        { "name": "line_item_approval_status", "type": "bigint" },
+        { "name": "total_mtd", "type": "decimal(15,2)" },
+        { "name": "created_by", "type": "bigint" },
+        { "name": "updated_by", "type": "bigint" }
+      ],
+      "foreign_keys": [
+        {
+          "column": "invoice_id",
+          "references": "invoice_info.id"
+        }
+      ],
+      "unique_keys": []
+    },
+
+    "ems-portal-service.expenses_master": {
+      "schema": "ems-portal-service",
+      "table": "expenses_master",
+      "columns": [
+        { "name": "id", "type": "bigint" },
+        { "name": "expense_name", "type": "varchar(150)" },
+        { "name": "status", "type": "int(1)" }
+        { "name": "charge_code", "type": "varchar(100)" }
+      ],
+      "foreign_keys": [],
+      "unique_keys": [
+        {
+          "name": "expense_name",
+          "columns": ["expense_name"]
+        }
+      ]
+    },
+
+    "ems-portal-service.invoice_line_items_expense": {
+      "schema": "ems-portal-service",
+      "table": "invoice_line_items_expense",
+      "columns": [
+        { "name": "id", "type": "bigint" },
+        { "name": "invoice_line_item_id", "type": "bigint" },
+        { "name": "expense_id", "type": "bigint" },
+        { "name": "expense_mode_id", "type": "bigint" },
+        { "name": "created_by", "type": "bigint" },
+        { "name": "updated_by", "type": "bigint" }
+      ],
+      "foreign_keys": [
+        {
+          "column": "invoice_line_item_id",
+          "references": "invoice_line_items.id"
+        }
+      ],
+      "unique_keys": []
+    },
+
+    "ems-portal-service.quick_code_master": {
+    "schema": "ems-portal-service",
+    "table": "quick_code_master",
+    "columns": [
+      { "name": "id", "type": "bigint" },
+      { "name": "category_id", "type": "bigint" },
+      { "name": "name", "type": "varchar(150)" },
+      { "name": "status", "type": "int" }
+    ],
+    "foreign_keys": [],
+    "unique_keys": []
+  },
+    "ems-portal-service.master_status": {
+    "schema": "ems-portal-service",
+    "table": "master_status",
+    "columns": [
+      { "name": "id", "type": "bigint" },
+      { "name": "name", "type": "varchar(50)" }
+    ],
+    "foreign_keys": [],
+    "unique_keys": [
+      {
+        "name": "master_status_name",
+        "columns": ["name"]
+      }
+    ]
+  }
+  }
+}

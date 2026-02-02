@@ -1,0 +1,413 @@
+# EMS Semantic Documentation
+Scope: Account, Warehouse & Portal Services  
+Status: ACTIVE – Incremental updates expected  
+Purpose: Provide business semantics and join intent for Vanna training
+
+------------------------------------------------------------
+1. GLOBAL CONVENTIONS
+------------------------------------------------------------
+
+- All columns ending with `_id` are surrogate keys.
+- Surrogate keys do NOT carry business meaning by themselves.
+- Human-readable values are obtained via lookup tables.
+- The primary lookup table used across services is:
+  ems-portal-service.quick_code_master
+- The column `quick_code_master.name` is the canonical human-readable value.
+- Audit fields are ignored everywhere:
+  created_at, updated_at, created_by, updated_by
+  **(Exception: See Section 4 for Invoice audit rules)**
+
+------------------------------------------------------------
+2. EMS-WAREHOUSE-SERVICE
+------------------------------------------------------------
+
+2.1 warehouse_info
+
+Represents a physical warehouse where expenses are incurred and invoices are raised.
+
+------------------------------------------------------------
+2.1.1 Geographic and Classification Fields
+------------------------------------------------------------
+
+The following fields store coded values.
+The actual human-readable values must be retrieved via quick_code_master.
+
+city_id
+- Represents the city in which the warehouse is located
+- Lookup:
+  warehouse_info.city_id
+  → ems-portal-service.quick_code_master.id
+  → quick_code_master.name (city)
+
+state_id
+- Represents the state in which the warehouse is located
+- Lookup:
+  warehouse_info.state_id
+  → ems-portal-service.quick_code_master.id
+  → quick_code_master.name (state)
+
+zone_id
+- Represents the operational zone of the warehouse
+- Lookup:
+  warehouse_info.zone_id
+  → ems-portal-service.quick_code_master.id
+  → quick_code_master.name (zone)
+
+region_id
+- Represents the regional classification of the warehouse
+- Lookup:
+  warehouse_info.region_id
+  → ems-portal-service.quick_code_master.id
+  → quick_code_master.name (region)
+
+ownership_type_id
+- Represents the ownership type of the warehouse
+- Lookup:
+  warehouse_info.ownership_type_id
+  → ems-portal-service.quick_code_master.id
+  → quick_code_master.name (ownership type)
+
+------------------------------------------------------------
+2.1.2 Lifecycle and Type Fields
+------------------------------------------------------------
+
+start_date
+- Date on which the warehouse became operational
+
+closing_date
+- Date on which the warehouse was closed
+- NULL indicates the warehouse is currently active
+
+warehouse_type
+- Indicates the warehouse usage model
+- Possible values:
+  STAND_ALONE
+  MULTI_USER
+
+------------------------------------------------------------
+2.2 warehouse_expense_mapping
+------------------------------------------------------------
+
+Defines which expense categories are applicable for a warehouse.
+
+warehouse_id
+- References ems-warehouse-service.warehouse_info.id
+
+expense_id
+- References ems-portal-service.expense_master.id
+- The human-readable expense name is obtained from:
+  expense_master.expense_name
+
+Business rule:
+- Only expenses mapped in this table are considered valid
+  for a given warehouse.
+
+------------------------------------------------------------
+3. EMS-ACCOUNT-SERVICE
+------------------------------------------------------------
+
+3.1 account_info
+
+Represents a client or customer entity against which invoices are raised.
+
+------------------------------------------------------------
+3.1.1 Geographic and Industry Classification
+------------------------------------------------------------
+
+The following fields store coded values.
+Human-readable values are retrieved via quick_code_master.
+
+state_id
+- Represents the state of the account
+- Lookup:
+  account_info.state_id
+  → ems-portal-service.quick_code_master.id
+  → quick_code_master.name (state)
+
+city_id
+- Represents the city of the account
+- Lookup:
+  account_info.city_id
+  → ems-portal-service.quick_code_master.id
+  → quick_code_master.name (city)
+
+zone_id
+- Represents the operational zone of the account
+- Lookup:
+  account_info.zone_id
+  → ems-portal-service.quick_code_master.id
+  → quick_code_master.name (zone)
+
+industry_id
+- Represents the industry classification of the account
+- Lookup:
+  account_info.industry_id
+  → ems-portal-service.quick_code_master.id
+  → quick_code_master.name (industry)
+
+------------------------------------------------------------
+3.2 account_warehouse_info
+------------------------------------------------------------
+
+Represents the relationship between an account and a warehouse.
+
+account_info_id
+- References ems-account-service.account_info.id
+
+warehouse_id
+- References ems-warehouse-service.warehouse_info.id
+
+zone_id
+- Represents the zone applicable to the account–warehouse relationship
+- Lookup:
+  account_warehouse_info.zone_id
+  → ems-portal-service.quick_code_master.id
+  → quick_code_master.name (zone)
+
+industry_id
+- Represents the industry applicable to the account–warehouse relationship
+- Lookup:
+  account_warehouse_info.industry_id
+  → ems-portal-service.quick_code_master.id
+  → quick_code_master.name (industry)
+
+start_date
+- Date when the account started operating in the warehouse
+
+closing_date
+- Date when the account stopped operating in the warehouse
+- NULL indicates an active relationship
+
+------------------------------------------------------------
+3.3 account_expense_mapping
+------------------------------------------------------------
+
+Defines which expense categories are allowed for a given
+account–warehouse relationship.
+
+account_warehouse_id
+- References ems-account-service.account_warehouse_info.id
+
+expense_id
+- References ems-portal-service.expense_master.id
+- Human-readable expense name is obtained from:
+  expense_master.expense_name
+
+Business rule:
+- Only expenses mapped in this table are valid
+  for the given account–warehouse combination.
+
+------------------------------------------------------------
+4. EMS-PORTAL-SERVICE
+------------------------------------------------------------
+
+**CONVENTION EXCEPTION:**
+Unlike other services, the **Invoice** tables retain audit fields (`created_by`, `updated_by`, etc.) as they carry critical business information regarding ownership and approval chains.
+
+------------------------------------------------------------
+4.1 invoice_info
+------------------------------------------------------------
+
+Represents the primary header information for an expense invoice.
+
+------------------------------------------------------------
+4.1.1 Relationship and Classification Fields
+------------------------------------------------------------
+
+account_id
+- Represents the account associated with the invoice
+- Lookup:
+  invoice_info.account_id
+  → ems-account-service.account_info.id
+  → account_info.account_name
+
+warehouse_id
+- Represents the warehouse associated with the invoice
+- Lookup:
+  invoice_info.warehouse_id
+  → ems-warehouse-service.warehouse_info.id
+  → warehouse_info.warehouse_name
+
+financial_year_id
+- Represents the financial year the invoice belongs to
+- Lookup:
+  invoice_info.financial_year_id
+  → ems-portal-service.quick_code_master.id
+  → quick_code_master.name (financial year)
+
+expense_mode_id
+- Represents the mode of expense
+- Lookup:
+  invoice_info.expense_mode_id
+  → ems-portal-service.quick_code_master.id
+  → quick_code_master.name (expense mode)
+
+approval_status
+- Represents the current approval state of the invoice
+- Lookup:
+  invoice_info.approval_status
+  → ems-portal-service.master_status.id
+  → master_status.name
+
+------------------------------------------------------------
+4.1.2 Actor Fields (User Lookups)
+------------------------------------------------------------
+
+created_by
+- User who created/uploaded the invoice
+- Lookup:
+  invoice_info.created_by
+  → ems-auth-service.user.id
+  → user.full_name
+
+updated_by
+- User who last updated the invoice
+- Lookup:
+  invoice_info.updated_by
+  → ems-auth-service.user.id
+  → user.full_name
+
+vendor_id
+- The vendor associated with the invoice
+- Lookup:
+  invoice_info.vendor_id
+  → ems-auth-service.user.id
+  → user.full_name
+
+------------------------------------------------------------
+4.1.3 Invoice Attributes
+------------------------------------------------------------
+
+invoice_date
+- The date the invoice was uploaded
+
+invoice_month
+- The specific month the invoice is attributed to
+
+invoice_status
+- Binary status indicator
+- Values: {0 / 1}
+
+invoice_expense_type
+- Classification of the expense complexity
+- Values: {SINGLE / MULTI}
+
+internal_invoice_number
+- The unique system-generated invoice number
+
+------------------------------------------------------------
+4.2 invoice_line_items
+------------------------------------------------------------
+
+Represents individual line items within an invoice.
+One `invoice_info` entry can have multiple `invoice_line_items`.
+
+invoice_id
+- Foreign Key to ems-portal-service.invoice_info.id
+
+line_item_approval_status
+- Represents the approval status of this specific line item
+- Lookup:
+  invoice_line_items.line_item_approval_status
+  → ems-portal-service.master_status.id
+  → master_status.name
+
+total_mtd
+- Returns cumulative expenses of this expense type
+- Business Rule: This column is compared with the budget to validate if the expense is within limits.
+
+created_by
+- User who created the line item
+- Lookup:
+  → ems-auth-service.user.id
+  → user.full_name
+
+updated_by
+- User who last updated the line item
+- Lookup:
+  → ems-auth-service.user.id
+  → user.full_name
+
+------------------------------------------------------------
+4.3 invoice_line_items_expense
+------------------------------------------------------------
+
+Represents the granular expense breakdown for a line item.
+One `invoice_line_items` entry can have multiple `invoice_line_items_expense` entries.
+
+invoice_line_item_id
+- Foreign Key to ems-portal-service.invoice_line_items.id
+
+expense_id
+- Represents the specific expense
+- Lookup (Name):
+  invoice_line_items_expense.expense_id
+  → ems-portal-service.expenses_master.id
+  → expenses_master.expense_name
+- Lookup (Category):
+  invoice_line_items_expense.expense_id
+  → ems-portal-service.expenses_master.expense_category_id
+  → ems-portal-service.quick_code_master.id
+  → quick_code_master.name (expense category)
+
+expense_mode_id
+- Represents the mode of expense for this specific item
+- Lookup:
+  invoice_line_items_expense.expense_mode_id
+  → ems-portal-service.quick_code_master.id
+  → quick_code_master.name
+
+created_by
+- User who created the entry
+- Lookup:
+  → ems-auth-service.user.id
+  → user.full_name
+
+updated_by
+- User who last updated the entry
+- Lookup:
+  → ems-auth-service.user.id
+  → user.full_name
+
+
+------------------------------------------------------------
+JOIN POLICY (AUTHORITATIVE – MUST FOLLOW)
+------------------------------------------------------------
+
+FACT TABLES:
+- ems-portal-service.invoice_info
+- ems-portal-service.invoice_line_items
+
+RULES:
+
+1. invoice_info is a transactional FACT table.
+   It already contains:
+   - account_id
+   - warehouse_id
+
+2. For ANY invoice aggregation query:
+   - DO NOT join via ems-account-service.account_warehouse_info
+   - DO NOT use relationship tables to infer warehouse or account
+
+3. Legal joins for invoice queries:
+   - invoice_info.account_id → ems-account-service.account_info.id
+   - invoice_info.warehouse_id → ems-warehouse-service.warehouse_info.id
+
+4. account_warehouse_info is a CONTEXTUAL mapping table.
+   - It MUST NOT be used for invoice aggregation
+   - It is used ONLY when the question explicitly asks about
+     account–warehouse relationships
+
+5. Monetary aggregation rules:
+   - ALL invoice amounts MUST be derived from:
+     ems-portal-service.invoice_line_items.total_mtd
+   - invoice_info does NOT carry monetary totals
+
+6. If a query uses both:
+   - invoice_info
+   - account_warehouse_info
+   the query is INVALID unless explicitly requested.
+
+------------------------------------------------------------
+
+

@@ -1,0 +1,588 @@
+source ems_auth_service {
+connection = "trino.ems_auth"
+}
+
+############################################################
+# ENTITY: client_account_details
+############################################################
+
+entity client_account_details {
+column id: bigint [pk, auto_increment]
+column account_code: varchar(255)
+column account_name: varchar(255)
+column address_1: varchar(255)
+column address_2: varchar(255)
+column city_code: int
+column country_code: int
+column email: varchar(255)
+column is_carrier_logic: tinyint(1)
+column is_pincode_routing: tinyint(1)
+column is_sms_enabled: tinyint(1)
+column organization_name: varchar(255)
+column phone: varchar(255)
+column postal_code: varchar(255)
+column state_code: int
+column status: int
+}
+
+
+############################################################
+# ENTITY: client_warehouse_mapping
+############################################################
+
+entity client_warehouse_mapping {
+column id: bigint [pk, auto_increment]
+column client_id: bigint
+column status: int
+column warehouse_id: bigint
+}
+
+
+############################################################
+# ENTITY: contacts
+############################################################
+
+entity contacts {
+column id: bigint [pk, auto_increment]
+column address: varchar(255)
+column birth_date: varchar(255)
+column company: varchar(255)
+column contact_name: varchar(255)
+column home: varchar(255)
+column mobile: varchar(255)
+column nick_name: varchar(255)
+column notes: varchar(255)
+column phonetic_name: varchar(255)
+column relationship: varchar(255)
+column social: varchar(255)
+column title: varchar(255)
+column user_group: varchar(255)
+column user_id: bigint
+column reverse_vidring: varchar(255)
+column vidring: varchar(255)
+column created_at: datetime
+column updated_at: datetime
+column created_by: bigint
+column updated_by: bigint
+
+unique_key UniqueUserIdAndMobile (user_id, mobile)
+}
+
+
+############################################################
+# ENTITY: content_details
+############################################################
+
+entity content_details {
+column id: bigint [pk, auto_increment]
+column file_name: varchar(255)
+column file_type: varchar(255)
+column duration: varchar(255)
+column file_url: varchar(255)
+column created_at: datetime
+column updated_at: datetime
+column created_by: bigint
+column updated_by: bigint
+column category: varchar(255)
+column content_creator_name: varchar(255)
+column is_ipr: bit
+column user_id: bigint
+}
+
+
+############################################################
+# ENTITY: content_details_copy
+############################################################
+
+entity content_details_copy {
+column id: bigint [pk, auto_increment]
+column user_id: bigint
+column content_id: varchar(15)
+column file_name: varchar(255)
+column file_url: varchar(255)
+column file_type: varchar(255)
+column content_type: enum('Audio','Video')
+column title: varchar(2048)
+column category: bigint
+column sub_category: varchar(50)
+column language: int
+column tags: varchar(4096)
+column duration: varchar(255)
+column provider: int
+column content_creator_name: varchar(255)
+column is_ipr: bit
+column copyright_notice: varchar(150)
+column created_at: varchar(255)
+column created_by: varchar(255)
+column updated_at: datetime
+column updated_by: bigint
+column start_date: date
+column end_date: date
+
+foreign_key user_id references users(id)
+}
+
+
+############################################################
+# ENTITY: content_master
+############################################################
+
+entity content_master {
+column id: bigint [pk, auto_increment]
+column content_id: varchar(15)
+column file_name: varchar(255)
+column file_url: text
+column preview_url: text
+column content_type: enum('Audio','Video')
+column title: varchar(2048)
+column category: varchar(50)
+column sub_category: varchar(50)
+column language: int
+column tags: varchar(4096)
+column duration: int
+column provider: varchar(255)
+column content_creator_name: varchar(255)
+column is_ipr: tinyint
+column copyright_notice: varchar(150)
+column created_at: datetime
+column created_by: varchar(255)
+column updated_at: datetime
+column updated_by: bigint
+column start_date: date
+column end_date: date
+column status: int [default=1]
+column file_url_720p: text
+
+unique_key unique_content_id (content_id)
+}
+
+
+############################################################
+# ENTITY: content_master_copy
+############################################################
+
+entity content_master_copy {
+column id: bigint [pk, auto_increment]
+column content_id: varchar(15)
+column file_name: varchar(255)
+column file_url: text
+column preview_url: text
+column content_type: enum('Audio','Video')
+column title: varchar(2048)
+column category: varchar(50)
+column sub_category: varchar(50)
+column language: int
+column tags: varchar(4096)
+column duration: int
+column provider: varchar(255)
+column content_creator_name: varchar(255)
+column is_ipr: tinyint
+column copyright_notice: varchar(150)
+column created_at: datetime
+column created_by: varchar(255)
+column updated_at: datetime
+column updated_by: bigint
+column start_date: date
+column end_date: date
+column status: int [default=1]
+
+unique_key unique_content_id (content_id)
+}
+
+
+############################################################
+# ENTITY: file_upload_details
+############################################################
+
+entity file_upload_details {
+column id: bigint [pk, auto_increment]
+column user_id: bigint
+column file_name: varchar(255)
+column file_extension: varchar(255)
+column file_path: varchar(255)
+column file_type: varchar(255)
+column file_url: varchar(255)
+column message: varchar(255)
+column status: int
+column created_at: datetime
+column updated_at: datetime
+column created_by: bigint
+column updated_by: bigint
+
+foreign_key user_id references users_______(id)  # FK target from SQL
+}
+
+
+############################################################
+# ENTITY: log_request_response
+############################################################
+
+entity log_request_response {
+column id: bigint [pk, auto_increment]
+column req_body: text
+column req_date_time: timestamp
+column req_end_point: varchar(1024)
+column req_headers: text
+column req_ip: varchar(20)
+column req_key: varchar(50)
+column req_method: varchar(25)
+column req_parameters: longtext
+column req_user: varchar(255)
+column res_body: longtext
+column res_date_time: timestamp
+column res_status: int
+}
+
+
+############################################################
+# ENTITY: master_categories
+############################################################
+
+entity master_categories {
+column id: bigint [pk, auto_increment]
+column name: varchar(1024)
+column created_at: datetime
+column updated_at: datetime
+column created_by: bigint
+column updated_by: bigint
+}
+
+
+############################################################
+# ENTITY: master_content_type
+############################################################
+
+entity master_content_type {
+column id: bigint [pk, auto_increment]
+column type: varchar(150)
+}
+
+
+############################################################
+# ENTITY: master_languages
+############################################################
+
+entity master_languages {
+column id: bigint [pk, auto_increment]
+column name: varchar(255)
+}
+
+
+############################################################
+# ENTITY: master_module
+############################################################
+
+entity master_module {
+column id: bigint [pk, auto_increment]
+column module_name: varchar(70)
+column module_description: varchar(50)
+column module_icon: varchar(30)
+column module_endpoint: varchar(100)
+column platform: varchar(10)
+column status: int
+}
+
+
+############################################################
+# ENTITY: master_submodule
+############################################################
+
+entity master_submodule {
+column id: bigint [pk, auto_increment]
+column sub_module_name: varchar(100)
+column sub_module_description: varchar(30)
+column sub_module_icon: varchar(30)
+column sub_module_endpoint: varchar(100)
+column platform: varchar(20)
+column status: int
+}
+
+
+############################################################
+# ENTITY: master_user_roles
+############################################################
+
+entity master_user_roles {
+column id: bigint [pk, auto_increment]
+column role: varchar(150)
+}
+
+
+############################################################
+# ENTITY: modules
+############################################################
+
+entity modules {
+column id: bigint [pk, auto_increment]
+column role_id: bigint
+column master_module_id: bigint
+column platform: varchar(100)
+column read_access: int
+column write_access: int
+column update_access: int
+column status: int
+column is_default: int
+column is_mobile_access: int
+
+unique_key IDX_UNQ (role_id, master_module_id, platform)
+
+foreign_key role_id references role_module_mapping(id)
+foreign_key master_module_id references master_module(id)
+}
+
+
+############################################################
+# ENTITY: role_module_mapping
+############################################################
+
+entity role_module_mapping {
+column id: bigint [pk, auto_increment]
+column user_role: varchar(50)
+column role_description: varchar(250)
+column is_mobile_access: int
+column is_web_access: int
+column status: int
+column platform: varchar(1024)
+}
+
+
+############################################################
+# ENTITY: sub_modules
+############################################################
+
+entity sub_modules {
+column id: bigint [pk, auto_increment]
+column module_id: bigint
+column master_submodule_id: bigint
+column read_access: int
+column write_access: int
+column update_access: int
+column status: int
+column sub_module_name: varchar(255)
+column is_default: int
+column is_mobile_access: int
+
+foreign_key module_id references modules(id)
+foreign_key master_submodule_id references master_submodule(id)
+}
+
+
+############################################################
+# ENTITY: user
+############################################################
+
+entity user {
+column id: bigint [pk, auto_increment]
+column user_name: varchar(255)
+column user_group: enum('NORMAL_USER','WHITLISTED_USER','DEMO_USER')
+column mobile: varchar(255)
+column email: varchar(255)
+column first_name: varchar(150)
+column last_name: varchar(255)
+column created_at: datetime(6)
+column updated_at: datetime(6)
+column mobile_verified: int
+column email_verified: int
+column created_by: bigint
+column updated_by: bigint
+column account: varchar(255)
+column address_1: varchar(255)
+column address_2: varchar(255)
+column device_id: varchar(255)
+column device_imei: varchar(255)
+column device_model: varchar(255)
+column fcm_token: varchar(255)
+column full_name: varchar(255)
+column gender: varchar(255)
+column is_otp: int
+column latitude: varchar(255)
+column longitude: varchar(255)
+column otp: varchar(255)
+column password: varchar(255)
+column pin_code: varchar(255)
+column profile_background_image: varchar(255)
+column profile_image: varchar(255)
+column provider: enum('local','facebook','google','ios','github','keycloak','web','mobile','email')
+column provider_id: varchar(255)
+column title: varchar(255)
+column user_type: enum('OLD','NEW','VENDOR','EMPLOYEE')
+column platform: varchar(512)
+column status: int
+column city_id: bigint
+column state_id: bigint
+column country_id: bigint
+column department_id: bigint
+column pan_number: varchar(100)
+column gst_number: varchar(100)
+column user_code: varchar(100)
+column hash_code: varchar(255)
+column whats_app_status: int
+
+unique_key UniqueUserIdAndEmailAndMobile (user_name, email, mobile)
+unique_key UNQ_USER_NAME (user_name)
+unique_key UNQ_EMAIL_ID (email)
+}
+
+
+############################################################
+# ENTITY: user_account_warehouse_mapping
+############################################################
+
+entity user_account_warehouse_mapping {
+column client_id: bigint
+column warehouse_id: bigint
+
+foreign_key client_id references user_client_mapping(id)
+}
+
+
+############################################################
+# ENTITY: user_client_mapping
+############################################################
+
+entity user_client_mapping {
+column id: bigint [pk, auto_increment]
+column user_id: bigint
+column client_id: bigint
+column platform: varchar(50)
+column status: int
+
+unique_key UNQ_ROW (user_id, client_id, platform)
+
+foreign_key user_id references user(id)
+}
+
+
+############################################################
+# ENTITY: user_content_details
+############################################################
+
+entity user_content_details {
+column id: bigint [pk, auto_increment]
+column created_at: datetime
+column updated_at: datetime
+column category: int
+column content_creator_name: varchar(255)
+column content_id: varchar(255)
+column content_type: varchar(255)
+column copyright_notice: varchar(255)
+column duration: int
+column end_date: datetime
+column file_name: varchar(255)
+column file_type: varchar(255)
+column file_url: varchar(255)
+column is_ipr: bit
+column language: int
+column provider: varchar(255)
+column start_date: datetime
+column sub_category: varchar(255)
+column tags: varchar(255)
+column title: varchar(255)
+column user_id: bigint
+}
+
+
+############################################################
+# ENTITY: user_personal_theme
+############################################################
+
+entity user_personal_theme {
+column id: bigint [pk, auto_increment]
+column user_id: bigint
+column background_main_color: varchar(50)
+column background_primary_color: varchar(50)
+column background_primary_hover_color: varchar(50)
+column background_sidebar_color: varchar(30)
+column bg_type: varchar(30)
+column expanded_sidebar: varchar(30)
+column main_text_color: varchar(30)
+column sidebar_type: varchar(30)
+column org_logo: varchar(100)
+column org_small_logo: varchar(100)
+
+unique_key user_id (user_id)
+
+foreign_key user_id references user(id)
+}
+
+
+############################################################
+# ENTITY: user_role_mapping
+############################################################
+
+entity user_role_mapping {
+column role_id: bigint
+column user_id: bigint
+
+foreign_key user_id references user(id)
+foreign_key role_id references role_module_mapping(id)
+}
+
+
+############################################################
+# ENTITY: user_warehouse_mapping
+############################################################
+
+entity user_warehouse_mapping {
+column id: bigint [pk, auto_increment]
+column user_id: bigint
+column warehouse_id: bigint
+column platform: varchar(100)
+column status: int
+column client_id: bigint
+column mapping_id: bigint
+
+unique_key UNQ_IDX (user_id, warehouse_id, platform, client_id, mapping_id)
+
+foreign_key user_id references user(id)
+}
+
+
+############################################################
+# ENTITY: users
+############################################################
+
+entity users {
+column id: bigint [pk, auto_increment]
+column created_at: datetime
+column updated_at: datetime
+column created_by: bigint
+column updated_by: bigint
+column account: varchar(255)
+column address_1: varchar(255)
+column address_2: varchar(255)
+column age: varchar(255)
+column city: varchar(255)
+column country: varchar(255)
+column date_of_birth: varchar(255)
+column device_id: varchar(255)
+column device_imei: varchar(255)
+column device_model: varchar(255)
+column email: varchar(255)
+column email_verified: bit
+column fcm_token: varchar(255)
+column first_name: varchar(5)
+column full_name: varchar(255)
+column gender: varchar(255)
+column is_otp: bit
+column last_name: varchar(255)
+column latitude: varchar(255)
+column longitude: varchar(255)
+column mobile: varchar(255)
+column mobile_verified: bit
+column otp: varchar(255)
+column password: varchar(255)
+column pin_code: varchar(255)
+column profile_background_image: varchar(255)
+column profile_image: varchar(255)
+column provider: varchar(255)
+column provider_id: varchar(255)
+column state: varchar(255)
+column title: varchar(255)
+column user_group: varchar(255)
+column user_name: varchar(255)
+column user_role: varchar(255)
+column user_type: varchar(255)
+
+unique_key UniqueUserIdAndEmailAndMobile (user_name, email, mobile)
+}

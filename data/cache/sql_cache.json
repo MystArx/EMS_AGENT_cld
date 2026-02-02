@@ -1,0 +1,38 @@
+{
+  "5f8fef2b0819133693deb4c2c2c8837ad12cd05af17438fe9ca069cb35fc5a34": {
+    "sql": "SELECT \n    SUM(ii.`total_amount`) AS total_invoice_amount\nFROM \n    `ems-portal-service`.`invoice_info` ii\nJOIN \n    `ems-warehouse-service`.`warehouse_info` wi ON ii.`warehouse_id` = wi.`id`\nWHERE \n    wi.`city_id` IN (SELECT `id` FROM `ems-portal-service`.`quick_code_master` WHERE `name` = 'Gurgaon') LIMIT 1000",
+    "ts": 1766485026.9710155
+  },
+  "b7b6920733c8c4f59660fc1aa06a05612d444c6d01b650db24c78385bc2b4fa7": {
+    "sql": "SELECT \n    wi.`id`, wi.`warehouse_code`, wi.`warehouse_name`\nFROM \n    `ems-warehouse-service`.`warehouse_info` wi\nJOIN \n    `ems-portal-service`.`quick_code_master` qcm ON wi.`city_id` = qcm.`id`\nWHERE \n    qcm.`name` = 'Gurgaon' LIMIT 1000",
+    "ts": 1766485161.6540399
+  },
+  "521f8e72b2642c8a88fb90d240665e62f5afee99d330bdc0fa584e95b8c15a01": {
+    "sql": "SELECT \n    ui.`full_name` AS vendor_name, COUNT(ii.`id`) AS invoice_count\nFROM \n    `ems-portal-service`.`invoice_info` ii\nJOIN \n    `ems-auth-service`.`user` ui ON ii.`vendor_id` = ui.`id`\nGROUP BY \n    ui.`full_name`\nORDER BY \n    invoice_count DESC\nLIMIT 1",
+    "ts": 1766485204.2749183
+  },
+  "170bf2ca4df9014745557d1825ee814f81b48f486b0db49446d6563cf1e5abc3": {
+    "sql": "SELECT \n    ui.`full_name` AS vendor_name\nFROM \n    `ems-portal-service`.`invoice_info` ii\nJOIN \n    `ems-auth-service`.`user` ui ON ii.`vendor_id` = ui.`id`\nJOIN \n    `ems-warehouse-service`.`warehouse_info` wi ON ii.`warehouse_id` = wi.`id`\nJOIN \n    `ems-portal-service`.`quick_code_master` qcm ON wi.`city_id` = qcm.`id`\nWHERE \n    qcm.`name` = 'Gurgaon'\nGROUP BY \n    ui.`full_name` LIMIT 1000",
+    "ts": 1766485290.41006
+  },
+  "e922c81e63b570b306804cf649ccc09024b893c3df6d61b99777b736a97ad9b7": {
+    "sql": "SELECT \n    ii.`invoice_month`,\n    COUNT(ii.`id`) AS invoice_count\nFROM \n    `ems-portal-service`.`invoice_info` ii\nJOIN \n    `ems-account-service`.`account_info` ai ON ii.`account_id` = ai.`id`\nWHERE \n    ai.`account_name` = 'Apollo Tyres'\nGROUP BY \n    ii.`invoice_month`\nORDER BY \n    ii.`invoice_month` LIMIT 1000",
+    "ts": 1766486007.73256
+  },
+  "5a6fdf1b323f85d6998211835850021235f577c6993da25f708a9659a376a1c6": {
+    "sql": "SELECT \n    ii.`invoice_month`,\n    COUNT(ii.`id`) AS invoice_count\nFROM \n    `ems-portal-service`.`invoice_info` ii\nJOIN \n    `ems-account-service`.`account_info` ai ON ii.`account_id` = ai.`id`\nWHERE \n    ai.`account_name` = 'Apollo Tyres LTD'\nGROUP BY \n    ii.`invoice_month`\nORDER BY \n    ii.`invoice_month`  LIMIT 1000",
+    "ts": 1766486172.8505795
+  },
+  "cf3f396140ddefbfb4f2ecd9aea766c1c65f4f7efdad33916ffc666f0f00f770": {
+    "sql": "SELECT \n    ii.`invoice_month`,\n    COUNT(ii.`id`) AS invoice_count\nFROM \n    `ems-portal-service`.`invoice_info` ii\nJOIN \n    `ems-account-service`.`account_info` ai ON ii.`account_id` = ai.`id`\nWHERE \n    ai.`account_name` = 'Apollo Tyres LTD'\nAND ii.`invoice_month` >= DATE_SUB(CURDATE(), INTERVAL 3 MONTH)\nGROUP BY \n    ii.`invoice_month`\nORDER BY \n    ii.`invoice_month`  LIMIT 1000",
+    "ts": 1766486284.4455826
+  },
+  "afb5b20f3af08134d4d5af5b1f374bb360cb30053b610732531252ffed39919a": {
+    "sql": "SELECT \n    ai.`account_name`\nFROM \n    `ems-portal-service`.`invoice_info` ii\nJOIN \n    `ems-account-service`.`account_info` ai ON ii.`account_id` = ai.`id`\nWHERE \n    ii.`invoice_month` = DATE_FORMAT(CURDATE(), '%Y-%m')\nGROUP BY \n    ai.`account_name`\nHAVING \n    COUNT(ii.`id`) > (SELECT COUNT(ii2.`id`) FROM `ems-portal-service`.`invoice_info` ii2 JOIN `ems-account-service`.`account_info` ai2 ON ii2.`account_id` = ai2.`id` WHERE ai2.`account_name` = 'Apollo Tyres LTD' AND ii2.`invoice_month` = DATE_FORMAT(CURDATE(), '%Y-%m'))\nORDER BY \n    ai.`account_name` LIMIT 1000",
+    "ts": 1766486543.9604588
+  },
+  "b2f28013601c671d1cff35eeb18a0770fddd44f5fcfdff34b99f69ff06287958": {
+    "sql": "SELECT \n    qcm.`name` AS region,\n    SUM(ii.`total_amount`) AS total_spend\nFROM \n    `ems-portal-service`.`invoice_info` ii\nJOIN \n    `ems-warehouse-service`.`warehouse_info` wi ON ii.`warehouse_id` = wi.`id`\nJOIN \n    `ems-portal-service`.`quick_code_master` qcm ON wi.`zone_id` = qcm.`id`\nGROUP BY \n    qcm.`name`  \nORDER BY \n    total_spend DESC LIMIT 1000",
+    "ts": 1766511169.7093728
+  }
+}

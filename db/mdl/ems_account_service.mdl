@@ -1,0 +1,94 @@
+source ems_account_service {
+connection = "trino.ems_account"
+}
+
+############################################################
+# ENTITY: account_expense_mapping
+############################################################
+
+entity account_expense_mapping {
+column account_warehouse_id: bigint
+column expense_id: bigint
+
+# No primary key declared in SQL
+# NOTE: Wren requires at least 1 PK candidate, so we leave it undefined.
+# We may add a synthetic PK later if required.
+
+foreign_key account_warehouse_id references account_warehouse_info(id)
+}
+
+
+############################################################
+# ENTITY: account_info
+############################################################
+
+entity account_info {
+column id: bigint [pk, auto_increment]
+column account_code: varchar(25)
+column account_name: varchar(150)
+column account_description: varchar(100)
+column contact_phone: varchar(20)
+column contact_email: varchar(200)
+column address_1: varchar(250)
+column address_2: varchar(250)
+column timezone: varchar(20)
+column latitude: float
+column longitude: float
+column status: int(1)
+column area_allocated: varchar(100)
+column state_id: bigint
+column city_id: bigint
+column industry_id: bigint
+column zone_id: bigint
+column created_at: datetime
+column updated_at: datetime
+column created_by: bigint
+column updated_by: bigint
+
+unique_key account_name (account_name)
+}
+
+
+############################################################
+# ENTITY: account_warehouse_info
+############################################################
+
+entity account_warehouse_info {
+column id: bigint [pk, auto_increment]
+column account_info_id: bigint
+column warehouse_id: bigint
+column status: int(2)
+column area_allocated: int
+column start_date: datetime
+column zone_id: bigint
+column industry_id: bigint
+column units_of_measurement_id: bigint
+column igst: varchar(100)
+column sgst: varchar(100)
+column cgst: varchar(100)
+column closing_date: datetime
+column created_at: datetime
+column updated_at: datetime
+column created_by: bigint
+column updated_by: bigint
+
+unique_key account_info_id__warehouse_id (account_info_id, warehouse_id)
+
+foreign_key account_info_id references account_info(id)
+}
+
+
+############################################################
+# ENTITY: user_table_info
+############################################################
+
+entity user_table_info {
+column id: bigint [pk, auto_increment]
+column user_id: bigint
+column table_name: varchar(200)
+column table_json: text
+column created_at: datetime(6)
+column updated_at: datetime(6)
+column created_by: bigint
+column updated_by: bigint
+}

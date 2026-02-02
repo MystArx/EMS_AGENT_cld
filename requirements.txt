@@ -1,0 +1,26 @@
+# --- Core API ---
+fastapi
+uvicorn
+
+# --- Async & utilities ---
+python-dotenv
+requests
+
+# --- Data & SQL ---
+pandas
+sqlalchemy
+pymysql
+
+# --- Validation & Models ---
+pydantic
+
+# --- Embeddings & Semantic Search ---
+sentence-transformers
+numpy
+faiss-cpu
+
+# --- ML / LLM Integration ---
+torch
+
+# --- Optional but recommended (logging stability) ---
+python-dateutil

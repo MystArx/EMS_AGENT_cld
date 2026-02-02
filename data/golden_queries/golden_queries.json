@@ -1,0 +1,295 @@
+{
+  "examples": [
+    {
+      "question": "What is the approval time in days for the invoice with the longest approval time?",
+      "sql": "SELECT ii.id, DATEDIFF(ii.updated_at, ii.created_at) AS approval_time_in_days FROM `ems-portal-service`.`invoice_info` ii JOIN `ems-portal-service`.`master_status` ms ON ii.approval_status = ms.id WHERE LOWER(ms.name) LIKE LOWER('%approved%') ORDER BY approval_time_in_days DESC LIMIT 1",
+      "notes": "Approval time = updated_at - created_at. Never use NOW(). Must join master_status.",
+      "tags": [
+        "approval_time",
+        "status_filtering"
+      ]
+    },
+    {
+      "question": "Which vendor has the worst rejection to approval ratio in the South region?",
+      "sql": "SELECT u.full_name AS vendor_name, SUM(CASE WHEN LOWER(ms.name) LIKE LOWER('%rejected%') THEN 1 ELSE 0 END) * 1.0 / NULLIF(SUM(CASE WHEN LOWER(ms.name) LIKE LOWER('%approved%') THEN 1 ELSE 0 END), 0) AS rejection_to_approval_ratio FROM `ems-portal-service`.`invoice_info` ii JOIN `ems-auth-service`.`user` u ON ii.created_by = u.id JOIN `ems-portal-service`.`master_status` ms ON ii.approval_status = ms.id JOIN `ems-warehouse-service`.`warehouse_info` wi ON ii.warehouse_id = wi.id JOIN `ems-portal-service`.`quick_code_master` qcm ON wi.region_id = qcm.id WHERE LOWER(qcm.name) LIKE LOWER('%south%') GROUP BY u.full_name HAVING SUM(CASE WHEN LOWER(ms.name) LIKE LOWER('%approved%') THEN 1 ELSE 0 END) > 0 ORDER BY rejection_to_approval_ratio DESC LIMIT 1",
+      "notes": "Ratio = rejected / approved. Region via warehouse→region_id. Must join master_status.",
+      "tags": [
+        "rejection_ratio",
+        "region_filtering",
+        "vendor_analysis"
+      ]
+    },
+    {
+      "question": "What is the average approval time in hours for approved invoices?",
+      "sql": "SELECT AVG(TIMESTAMPDIFF(HOUR, ii.created_at, ii.updated_at)) AS avg_approval_hours FROM `ems-portal-service`.`invoice_info` ii JOIN `ems-portal-service`.`master_status` ms ON ii.approval_status = ms.id WHERE LOWER(ms.name) LIKE LOWER('%approved%')",
+      "notes": "Use TIMESTAMPDIFF(HOUR, ...) for hours.",
+      "tags": [
+        "approval_time",
+        "status_filtering"
+      ]
+    },
+    {
+      "question": "Which account has the most invoices?",
+      "sql": "SELECT ai.account_name, COUNT(ii.id) AS invoice_count FROM `ems-account-service`.`account_info` ai JOIN `ems-portal-service`.`invoice_info` ii ON ai.id = ii.account_id GROUP BY ai.account_name ORDER BY invoice_count DESC LIMIT 1",
+      "notes": "Basic invoice count aggregation by account.",
+      "tags": [
+        "account_analysis",
+        "simple_aggregation"
+      ]
+    },
+    {
+      "question": "What is the total invoice amount for each account?",
+      "sql": "SELECT ai.account_name, SUM(ii.total_amount) AS total_invoice_amount FROM `ems-portal-service`.`invoice_info` ii JOIN `ems-account-service`.`account_info` ai ON ii.account_id = ai.id GROUP BY ai.account_name ORDER BY total_invoice_amount DESC LIMIT 1000",
+      "notes": "Always use invoice_info.total_amount.",
+      "tags": [
+        "account_analysis",
+        "simple_aggregation"
+      ]
+    },
+    {
+      "question": "What is the total invoice amount in Delhi?",
+      "sql": "SELECT SUM(ii.total_amount) AS total_invoice_amount FROM `ems-portal-service`.`invoice_info` ii JOIN `ems-warehouse-service`.`warehouse_info` wi ON ii.warehouse_id = wi.id JOIN `ems-portal-service`.`quick_code_master` qcm ON wi.city_id = qcm.id WHERE LOWER(qcm.name) LIKE LOWER('%delhi%') LIMIT 1000",
+      "notes": "City-based aggregation via warehouse.city_id.",
+      "tags": [
+        "region_filtering",
+        "simple_aggregation"
+      ]
+    },
+    {
+      "question": "Which account has the most invoices in the last 3 months?",
+      "sql": "SELECT ai.account_name, COUNT(ii.id) AS invoice_count FROM `ems-account-service`.`account_info` ai JOIN `ems-portal-service`.`invoice_info` ii ON ai.id = ii.account_id WHERE ii.invoice_date >= DATE_FORMAT(DATE_SUB(CURDATE(), INTERVAL 3 MONTH), '%Y-%m-01') AND ii.invoice_date < DATE_FORMAT(CURDATE(), '%Y-%m-01') GROUP BY ai.account_name ORDER BY invoice_count DESC LIMIT 1",
+      "notes": "Calendar-correct last 3 months (full calendar months).",
+      "tags": [
+        "account_analysis",
+        "time_filtering",
+        "calendar_months"
+      ]
+    },
+    {
+      "question": "What is the total invoice amount in the North zone?",
+      "sql": "SELECT SUM(ii.total_amount) AS total_invoice_amount FROM `ems-portal-service`.`invoice_info` ii JOIN `ems-warehouse-service`.`warehouse_info` wi ON ii.warehouse_id = wi.id JOIN `ems-portal-service`.`quick_code_master` qcm ON wi.zone_id = qcm.id WHERE LOWER(qcm.name) LIKE LOWER('%north%') LIMIT 1000",
+      "notes": "Zone via warehouse.zone_id.",
+      "tags": [
+        "region_filtering",
+        "simple_aggregation"
+      ]
+    },
+    {
+      "question": "Which accounts have fewer invoices than ABC Company in the last month?",
+      "sql": "SELECT ai.account_name FROM `ems-account-service`.`account_info` ai JOIN `ems-portal-service`.`invoice_info` ii ON ai.id = ii.account_id GROUP BY ai.account_name HAVING COUNT(ii.id) < ( SELECT COUNT(*) FROM `ems-portal-service`.`invoice_info` WHERE account_id = ( SELECT id FROM `ems-account-service`.`account_info` WHERE LOWER(account_name) LIKE LOWER('%abc company%') ) AND invoice_date >= DATE_FORMAT(DATE_SUB(CURDATE(), INTERVAL 1 MONTH), '%Y-%m-01') AND invoice_date < DATE_FORMAT(CURDATE(), '%Y-%m-01') ) LIMIT 1000",
+      "notes": "Calendar-correct last month comparison.",
+      "tags": [
+        "comparative_analysis",
+        "account_analysis",
+        "calendar_months"
+      ]
+    },
+    {
+      "question": "Show me the monthly invoice count trend for each account in the last 6 months",
+      "sql": "SELECT ai.account_name, DATE_FORMAT(ii.invoice_month, '%Y-%m') AS invoice_month, COUNT(DISTINCT ii.id) AS invoice_count FROM `ems-account-service`.`account_info` ai JOIN `ems-portal-service`.`invoice_info` ii ON ai.id = ii.account_id WHERE ii.invoice_month >= DATE_FORMAT(DATE_SUB(CURDATE(), INTERVAL 6 MONTH), '%Y-%m-01') AND ii.invoice_month < DATE_FORMAT(CURDATE(), '%Y-%m-01') GROUP BY ai.account_name, invoice_month ORDER BY ai.account_name, invoice_month LIMIT 1000",
+      "notes": "FIXED: Uses invoice_month (Bill Date) instead of invoice_date (Upload Date) to ensure accurate financial reporting.",
+      "tags": [
+        "account_analysis",
+        "time_filtering",
+        "calendar_months"
+      ]
+    },
+    {
+      "question": "What is the total invoice amount for ABC Company?",
+      "sql": "SELECT SUM(ii.total_amount) AS total_invoice_amount FROM `ems-portal-service`.`invoice_info` ii JOIN `ems-account-service`.`account_info` ai ON ii.account_id = ai.id WHERE LOWER(ai.account_name) LIKE LOWER('%abc company%') LIMIT 1000",
+      "notes": "Fuzzy account match.",
+      "tags": [
+        "account_analysis",
+        "simple_aggregation"
+      ]
+    },
+    {
+      "question": "What is the total number of invoices?",
+      "sql": "SELECT COUNT(ii.id) AS total_invoice_count FROM `ems-portal-service`.`invoice_info` ii LIMIT 1000",
+      "notes": "Global count.",
+      "tags": [
+        "simple_aggregation"
+      ]
+    },
+    {
+      "question": "What is the total invoice amount across all invoices?",
+      "sql": "SELECT SUM(ii.total_amount) AS total_invoice_amount FROM `ems-portal-service`.`invoice_info` ii LIMIT 1000",
+      "notes": "Global sum.",
+      "tags": [
+        "simple_aggregation"
+      ]
+    },
+    {
+      "question": "Which vendor has the longest TAT?",
+      "sql": "SELECT u.full_name AS vendor_name, MAX(DATEDIFF(ii.updated_at, ii.created_at)) AS longest_tat_days, COUNT(ii.id) AS invoice_count FROM `ems-portal-service`.`invoice_info` ii JOIN `ems-auth-service`.`user` u ON ii.created_by = u.id JOIN `ems-portal-service`.`master_status` ms ON ii.approval_status = ms.id WHERE LOWER(ms.name) LIKE LOWER('%approved%') GROUP BY u.full_name ORDER BY longest_tat_days DESC LIMIT 1000",
+      "notes": "Admin correction",
+      "tags": [
+        "admin_correction"
+      ]
+    },
+    {
+      "question": "Who are the vendors who have not uploaded invoices consistently in the last 6 months?",
+      "sql": "WITH vendor_months AS ( SELECT u.id, u.full_name, DATE_FORMAT(ii.invoice_date, '%Y-%m') AS month FROM `ems-portal-service`.`invoice_info` ii JOIN `ems-auth-service`.`user` u ON u.id = ii.created_by WHERE u.user_type LIKE '%VENDOR%' AND ii.invoice_date >= DATE_FORMAT(DATE_SUB(CURDATE(), INTERVAL 6 MONTH), '%Y-%m-01') AND ii.invoice_date < DATE_FORMAT(CURDATE(), '%Y-%m-01') GROUP BY u.id, u.full_name, month ), vendor_month_counts AS ( SELECT id, full_name, COUNT(DISTINCT month) AS months_with_invoices FROM vendor_months GROUP BY id, full_name ) SELECT id, full_name, months_with_invoices, (6 - months_with_invoices) AS missing_months FROM vendor_month_counts WHERE months_with_invoices < 6 ORDER BY months_with_invoices ASC, full_name LIMIT 1000",
+      "notes": "Calendar-month consistency check.",
+      "tags": [
+        "vendor_analysis",
+        "time_filtering",
+        "temporal_gaps",
+        "calendar_months"
+      ]
+    },
+    {
+      "question": "In which months has vendor KBR Enterprises not uploaded any invoice in the last 6 months?",
+      "sql": "WITH last_6_months AS ( SELECT DATE_FORMAT(DATE_SUB(DATE_FORMAT(CURDATE(), '%Y-%m-01'), INTERVAL n MONTH), '%Y-%m') AS month FROM (SELECT 0 n UNION SELECT 1 UNION SELECT 2 UNION SELECT 3 UNION SELECT 4 UNION SELECT 5) m ), vendor_months AS ( SELECT DISTINCT DATE_FORMAT(ii.created_at, '%Y-%m') AS month FROM `ems-portal-service`.`invoice_info` ii JOIN `ems-auth-service`.`user` u ON ii.created_by = u.id WHERE LOWER(u.full_name) LIKE LOWER('%kbr enterprises%') AND ii.invoice_date >= DATE_FORMAT(DATE_SUB(CURDATE(), INTERVAL 6 MONTH), '%Y-%m-01') ) SELECT lm.month AS missing_month FROM last_6_months lm LEFT JOIN vendor_months vm ON lm.month = vm.month WHERE vm.month IS NULL ORDER BY lm.month DESC",
+      "notes": "Admin correction (calendar-correct).",
+      "tags": [
+        "vendor_analysis",
+        "temporal_gaps",
+        "calendar_months"
+      ]
+    },
+    {
+      "question": "Which month is missing an invoice upload for HR Mart?",
+      "sql": "WITH last_6_months AS ( SELECT DATE_FORMAT(DATE_SUB(DATE_FORMAT(CURDATE(), '%Y-%m-01'), INTERVAL n MONTH), '%Y-%m-01') AS month_start FROM ( SELECT 0 n UNION ALL SELECT 1 UNION ALL SELECT 2 UNION ALL SELECT 3 UNION ALL SELECT 4 UNION ALL SELECT 5 ) m ), hr_mart_invoice_months AS ( SELECT DISTINCT DATE_FORMAT(ii.invoice_date, '%Y-%m-01') AS month_start FROM `ems-portal-service`.`invoice_info` ii JOIN `ems-account-service`.`account_info` ai ON ii.account_id = ai.id WHERE ai.account_name LIKE '%HR Mart%' AND ii.invoice_date >= DATE_FORMAT(DATE_SUB(CURDATE(), INTERVAL 6 MONTH), '%Y-%m-01') ) SELECT DATE_FORMAT(lm.month_start, '%Y-%m') AS missing_month FROM last_6_months lm LEFT JOIN hr_mart_invoice_months im ON lm.month_start = im.month_start WHERE im.month_start IS NULL ORDER BY missing_month",
+      "notes": "Admin correction (calendar-correct).",
+      "tags": [
+        "admin_correction"
+      ]
+    },
+    {
+      "question": "Total Expense for Dasna Warehouse",
+      "sql": "SELECT SUM(ii.total_amount) AS total_expense FROM `ems-portal-service`.`invoice_info` ii JOIN `ems-warehouse-service`.`warehouse_info` wi ON ii.warehouse_id = wi.id WHERE LOWER(wi.warehouse_name) LIKE LOWER('%dasna%') LIMIT 1000",
+      "notes": "Admin correction",
+      "tags": [
+        "admin_correction"
+      ]
+    },
+    {
+      "question": "List warehouses with inconsistent expense history in the last 6 months",
+      "sql": "WITH warehouse_months AS ( SELECT wi.id AS warehouse_id, DATE_FORMAT(ii.invoice_month, '%Y-%m') AS ym FROM `ems-portal-service`.`invoice_info` ii JOIN `ems-warehouse-service`.`warehouse_info` wi ON ii.warehouse_id = wi.id WHERE ii.invoice_month >= DATE_FORMAT(DATE_SUB(CURDATE(), INTERVAL 6 MONTH), '%Y-%m-01') AND ii.invoice_month < DATE_FORMAT(CURDATE(), '%Y-%m-01') ), warehouse_counts AS ( SELECT warehouse_id, COUNT(DISTINCT ym) AS active_months FROM warehouse_months GROUP BY warehouse_id ) SELECT wi.id, wi.warehouse_name, wc.active_months FROM warehouse_counts wc JOIN `ems-warehouse-service`.`warehouse_info` wi ON wc.warehouse_id = wi.id WHERE wc.active_months < 6 ORDER BY wc.active_months ASC LIMIT 1000",
+      "notes": "FIXED: Consistency checks must look at Bill Month (invoice_month), not Upload Date.",
+      "tags": [
+        "admin_correction",
+        "calendar_months"
+      ]
+    },
+    {
+      "question": "Show me vendors who uploaded invoices in December 2025",
+      "sql": "SELECT DISTINCT\n  u.id,\n  u.full_name,\n  COUNT(ii.id) AS invoice_count\nFROM `ems-portal-service`.`invoice_info` ii\nJOIN `ems-auth-service`.`user` u ON u.id = ii.created_by\nWHERE u.user_type LIKE '%VENDOR%'\nAND ii.invoice_date >= '2025-12-01'\nAND ii.invoice_date < '2026-01-01'\nGROUP BY u.id, u.full_name\nORDER BY invoice_count DESC\nLIMIT 1000",
+      "notes": "Single calendar month with explicit dates. Pattern: month start date to next month start date.",
+      "tags": [
+        "vendor_analysis",
+        "time_filtering",
+        "calendar_months",
+        "explicit_dates"
+      ]
+    },
+    {
+      "question": "Which vendors have been inconsistent in their uploads over the last 5 months?",
+      "sql": "WITH vendor_months AS (\n    SELECT \n        u.id, \n        u.full_name, \n        DATE_FORMAT(ii.invoice_date, '%Y-%m') AS month\n    FROM \n        `ems-portal-service`.`invoice_info` ii\n    JOIN \n        `ems-auth-service`.`user` u ON u.id = ii.created_by\n    WHERE \n        u.user_type LIKE '%VENDOR%'\n        -- Start: 1st day of 5 months ago\n        AND ii.invoice_date >= DATE_FORMAT(DATE_SUB(CURDATE(), INTERVAL 5 MONTH), '%Y-%m-01') \n        -- End: 1st day of current month (excludes current partial month)\n        AND ii.invoice_date < DATE_FORMAT(CURDATE(), '%Y-%m-01')\n    GROUP BY \n        u.id, u.full_name, month\n),\nvendor_month_counts AS (\n    SELECT \n        id, \n        full_name, \n        COUNT(DISTINCT month) AS months_with_invoices\n    FROM \n        vendor_months\n    GROUP BY \n        id, full_name\n)\nSELECT \n    id, \n    full_name, \n    months_with_invoices, \n    (5 - months_with_invoices) AS missing_months\nFROM \n    vendor_month_counts\nWHERE \n    months_with_invoices < 5\nORDER BY \n    months_with_invoices ASC, \n    full_name\nLIMIT 1000;",
+      "notes": "Admin correction",
+      "tags": [
+        "admin_correction"
+      ]
+    },
+    {
+      "question": "What are the accounts with expenses in the period from October 2025 to December 2025?",
+      "sql": "SELECT \n    ai.id AS account_id,\n    ai.account_name,\n    COALESCE(SUM(ii.total_amount), 0) AS total_expenses\nFROM `ems-account-service`.`account_info` ai\nLEFT JOIN `ems-portal-service`.`invoice_info` ii\n    ON ai.id = ii.account_id\n    AND ii.invoice_date >= '2025-10-01'\n    AND ii.invoice_date <  '2026-01-01'\nGROUP BY\n    ai.id,\n    ai.account_name\nORDER BY\n    total_expenses DESC\nLIMIT 1000;\n",
+      "notes": "Admin correction",
+      "tags": [
+        "admin_correction"
+      ]
+    },
+    {
+      "question": "Which account has the highest number of unapproved invoices?",
+      "sql": "SELECT \n    ai.account_name,\n    COUNT(ii.id) AS unapproved_invoice_count\nFROM `ems-portal-service`.`invoice_info` ii\nJOIN `ems-account-service`.`account_info` ai\n    ON ai.id = ii.account_id\nJOIN `ems-portal-service`.`master_status` ms\n    ON ii.approval_status = ms.id\nWHERE LOWER(ms.name) LIKE LOWER('%pending%')\nGROUP BY ai.account_name\nORDER BY unapproved_invoice_count DESC\nLIMIT 1;\n",
+      "notes": "Admin correction",
+      "tags": [
+        "admin_correction"
+      ]
+    },
+    {
+      "question": "Which month has the highest number of unapproved invoices for vendors HAVELLS INDIA LIMITED?",
+      "sql": "SELECT\n    ei.invoice_month,\n    COUNT(ei.id) AS unapproved_invoice_count\nFROM `ems-portal-service`.`invoice_info` ei\nJOIN `ems-portal-service`.`master_status` ms\n    ON ei.approval_status = ms.id\nJOIN `ems-account-service`.`account_info` ai\n    ON ei.account_id = ai.id\nWHERE\n    LOWER(ai.account_name) LIKE LOWER('%HAVELLS INDIA LIMITED%')\n    AND LOWER(ms.name) LIKE LOWER('%pending%')\nGROUP BY\n    ei.invoice_month\nORDER BY\n    unapproved_invoice_count DESC\nLIMIT 1;\n",
+      "notes": "Admin correction",
+      "tags": [
+        "admin_correction"
+      ]
+    },
+    {
+      "question": "What are the regions associated with warehouses that are linked to Samsung?",
+      "sql": "SELECT DISTINCT\n    qcm.name AS region\nFROM `ems-portal-service`.`invoice_info` ii\nJOIN `ems-account-service`.`account_info` ai\n    ON ii.account_id = ai.id\nJOIN `ems-warehouse-service`.`warehouse_info` wi\n    ON ii.warehouse_id = wi.id\nJOIN `ems-portal-service`.`quick_code_master` qcm\n    ON wi.region_id = qcm.id\nWHERE\n    LOWER(ai.account_name) LIKE LOWER('%Samsung%');\n",
+      "notes": "Admin correction",
+      "tags": [
+        "admin_correction"
+      ]
+    },
+    {
+      "question": "List vendors operating in the western region",
+      "sql": "SELECT DISTINCT\n    u.full_name AS vendor_name\nFROM `ems-portal-service`.`invoice_info` ii\nJOIN `ems-auth-service`.`user` u\n    ON ii.vendor_id = u.id\nJOIN `ems-warehouse-service`.`warehouse_info` wi\n    ON ii.warehouse_id = wi.id\nJOIN `ems-portal-service`.`quick_code_master` qcm\n    ON wi.region_id = qcm.id\nWHERE\n    LOWER(qcm.name) LIKE LOWER('%WEST%');\n",
+      "notes": "Admin correction",
+      "tags": [
+        "admin_correction"
+      ]
+    },
+    {
+      "question": "For vendors SRI VEKKALIAMMAN EDUCATIONAL AND CHARITABLE TRUST, MARUTHI PACKS & TRANS, BARENKABAI SHRAVANTH REDDY, SIVAM TRANSPORTS, SFS EQUIPMENTS PVT.LTD., SRI SUBRAMANYESWARA TRANS-LOGIX, AADHYA INTEGRATED SOLUTIONS, RAVI SOUND SERVICE, GOWTHARANI P, NATIONAL OFFICE MART, which warehouses do they operate in?",
+      "sql": "SELECT\n    wi.warehouse_name,\n    GROUP_CONCAT(\n        DISTINCT u.full_name\n        ORDER BY u.full_name\n        SEPARATOR ', '\n    ) AS vendor_names\nFROM `ems-portal-service`.`invoice_info` ii\nJOIN `ems-warehouse-service`.`warehouse_info` wi\n    ON ii.warehouse_id = wi.id\nJOIN `ems-auth-service`.`user` u\n    ON ii.vendor_id = u.id\nWHERE\n    LOWER(u.full_name) LIKE '%SRI VEKKALIAMMAN EDUCATIONAL AND CHARITABLE TRUST%'\n    OR LOWER(u.full_name) LIKE '%MARUTHI PACKS%'\n    OR LOWER(u.full_name) LIKE '%BARENKABAI SHRAVANTH REDDY%'\n    OR LOWER(u.full_name) LIKE '%SIVAM TRANSPORTS%'\n    OR LOWER(u.full_name) LIKE '%SFS EQUIPMENTS%'\n    OR LOWER(u.full_name) LIKE '%SRI SUBRAMANYESWARA TRANS%'\n    OR LOWER(u.full_name) LIKE '%AADHYA INTEGRATED SOLUTIONS%'\n    OR LOWER(u.full_name) LIKE '%RAVI SOUND SERVICE%'\n    OR LOWER(u.full_name) LIKE '%GOWTHARANI%'\n    OR LOWER(u.full_name) LIKE '%NATIONAL OFFICE MART%'\nGROUP BY\n    wi.id,\n    wi.warehouse_name\nORDER BY\n    wi.warehouse_name\nLIMIT 1000;\n",
+      "notes": "Admin correction",
+      "tags": [
+        "admin_correction"
+      ]
+    },
+    {
+      "question": "Which vendors operate in the Trichy 1 warehouse?",
+      "sql": "SELECT DISTINCT\n    u.full_name AS vendor_name\nFROM `ems-portal-service`.`invoice_info` ii\nJOIN `ems-auth-service`.`user` u\n    ON ii.vendor_id = u.id\nJOIN `ems-warehouse-service`.`warehouse_info` wi\n    ON ii.warehouse_id = wi.id\nWHERE\n    LOWER(wi.warehouse_name) LIKE LOWER('%Trichy 1%')\nORDER BY\n    u.full_name\nLIMIT 1000;\n",
+      "notes": "Admin correction",
+      "tags": [
+        "admin_correction"
+      ]
+    },
+    {
+      "question": "Which vendors operating in Trichy 1 have the highest rejected to approved ratio?",
+      "sql": "SELECT\n    u.full_name AS vendor_name,\n    (\n        SUM(CASE WHEN LOWER(ms.name) = 'rejected' THEN 1 ELSE 0 END) /\n        NULLIF(SUM(CASE WHEN LOWER(ms.name) = 'approved' THEN 1 ELSE 0 END), 0)\n    ) AS rejected_to_approved_ratio\nFROM `ems-portal-service`.`invoice_info` ii\nJOIN `ems-auth-service`.`user` u\n    ON ii.vendor_id = u.id\nJOIN `ems-warehouse-service`.`warehouse_info` wi\n    ON ii.warehouse_id = wi.id\nJOIN `ems-portal-service`.`master_status` ms\n    ON ii.approval_status = ms.id\nWHERE\n    LOWER(wi.warehouse_name) LIKE LOWER('%trichy 1%')\nGROUP BY\n    u.id, u.full_name\nHAVING\n    SUM(CASE WHEN LOWER(ms.name) = 'approved' THEN 1 ELSE 0 END) > 0\nORDER BY\n    rejected_to_approved_ratio DESC\nLIMIT 1000;\n",
+      "notes": "Admin correction",
+      "tags": [
+        "admin_correction"
+      ]
+    },
+    {
+      "question": "Total expense by vendor in Gurgaon warehouses",
+      "sql": "SELECT\n    ui.full_name AS vendor_name,\n    SUM(ii.total_amount) AS total_expense\nFROM `ems-portal-service`.`invoice_info` ii\nJOIN `ems-warehouse-service`.`warehouse_info` wi\n    ON ii.warehouse_id = wi.id\nJOIN `ems-auth-service`.`user` ui\n    ON ii.created_by = ui.id\nWHERE\n    LOWER(wi.warehouse_name) LIKE LOWER('%gurgaon%')\nGROUP BY\n    ui.full_name\nORDER BY\n    total_expense DESC\nLIMIT 1000;\n",
+      "notes": "Admin correction",
+      "tags": [
+        "admin_correction"
+      ]
+    },
+    {
+      "question": "What is the total rent in Dasna 1 warehouse?",
+      "sql": "SELECT\n  em.expense_name AS rent_type,\n  SUM(ii.total_amount) AS total_amount\nFROM `ems-portal-service`.`invoice_info` ii\nJOIN `ems-warehouse-service`.`warehouse_info` wi\n  ON ii.warehouse_id = wi.id\nJOIN `ems-portal-service`.`invoice_line_items` ili\n  ON ili.invoice_id = ii.id\nJOIN `ems-portal-service`.`expenses_master` em\n  ON ili.expense_id = em.id\nWHERE\n  wi.warehouse_name LIKE '%Dasna 1%'\n  AND LOWER(em.expense_name) LIKE '%rent%'\nGROUP BY\n  em.expense_name\nORDER BY\n  total_amount DESC",
+      "notes": "Expense-category query. When user asks for total rent in a warehouse, all rent-related expense categories must be grouped and displayed separately using expenses_master.expense_name. Aggregation must use invoice_info.total_amount.",
+      "tags": [
+        "expense_category",
+        "rent",
+        "warehouse",
+        "grouped_expense",
+        "monetary"
+      ]
+    },
+    {
+      "question": "What are the expense categories in the North region?",
+      "sql": "SELECT DISTINCT\n  em.expense_name AS expense_category\nFROM `ems-portal-service`.`invoice_info` ii\nJOIN `ems-portal-service`.`invoice_line_items` ili\n  ON ii.id = ili.invoice_id\nJOIN `ems-portal-service`.`expenses_master` em\n  ON ili.expense_id = em.id\nJOIN `ems-warehouse-service`.`warehouse_info` wi\n  ON ii.warehouse_id = wi.id\nJOIN `ems-portal-service`.`quick_code_master` qcm\n  ON wi.region_id = qcm.id\nWHERE\n  LOWER(qcm.name) LIKE '%north%'\nLIMIT 1000;\n",
+      "notes": "Admin correction",
+      "tags": [
+        "admin_correction"
+      ]
+    },
+    {
+    "question": "What is the total expense in Kolkata warehouse?",
+    "sql": "SELECT SUM(ii.total_amount) AS total_expense\nFROM `ems-portal-service`.`invoice_info` ii\nJOIN `ems-warehouse-service`.`warehouse_info` wi\n  ON ii.warehouse_id = wi.id\nWHERE wi.warehouse_name LIKE '%Kolkata%'",
+    "notes": "Plain total expense query. Must use invoice_info only. invoice_line_items must not be joined.",
+    "tags": ["total_expense", "warehouse", "simple_aggregation"]
+  }
+
+  ]
+}

@@ -1,0 +1,8 @@
+Total invoice amount from gurgaon warehouse
+all warehouses in gurgaon
+total expense from samsung account                
+what vendor has most invoices
+All vendors that operate in Gurgaon warehouses
+what is the invoice with the largest amount
+what is the value of second highest invoice
+remarks from gurgaon invoices

@@ -1,0 +1,56 @@
+source ems_warehouse_service {
+  connection = "trino.ems_warehouse"
+}
+
+############################################################
+# ENTITY: warehouse_expense_mapping
+############################################################
+
+entity warehouse_expense_mapping {
+  column warehouse_id: bigint
+  column expense_id: bigint
+
+  foreign_key warehouse_id references warehouse_info(id)
+}
+
+
+############################################################
+# ENTITY: warehouse_info
+############################################################
+
+entity warehouse_info {
+  column id: bigint [pk, auto_increment]
+  column warehouse_code: varchar(25)
+  column warehouse_name: varchar(150)
+  column warehouse_description: varchar(100)
+  column contact_email: varchar(200)
+  column contact_phone: varchar(20)
+  column address_1: varchar(250)
+  column address_2: varchar(250)
+  column country: varchar(50)
+  column landmark: varchar(50)
+  column latitude: float
+  column longitude: float
+  column pin_code: varchar(20)
+  column status: smallint(1)
+  column timezone: varchar(20)
+  column created_at: datetime(6)
+  column updated_at: datetime(6)
+  column created_by: bigint
+  column updated_by: bigint
+  column city_id: bigint
+  column state_id: bigint
+  column zone_id: bigint
+  column region_id: bigint
+  column ownership_type_id: bigint
+  column total_area: int(50)
+  column warehouse_api_code: varchar(100)
+  column warehouse_api_code_key: varchar(100)
+  column closing_date: datetime
+  column start_date: datetime
+  column warehouse_type: enum('MULTI_USER','STAND_ALONE')
+  column google_map_link: text
+
+  unique_key warehouse_code (warehouse_code)
+  unique_key warehouse_name (warehouse_name)
+}
