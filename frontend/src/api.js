@@ -2,7 +2,7 @@ import axios from 'axios';
 
 // Point to your FastAPI Backend
 const apiClient = axios.create({
-  baseURL: 'http://127.0.0.1:8000',
+  baseURL: 'https://ems-ai-agent.up.railway.app',
   headers: {
     'Content-Type': 'application/json',
   },
