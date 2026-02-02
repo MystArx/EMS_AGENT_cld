@@ -5,6 +5,7 @@ import requests
 import re
 from pathlib import Path
 from typing import Dict, Any
+from typing import Optional
 
 from services.api.chat_state import ChatState
 
