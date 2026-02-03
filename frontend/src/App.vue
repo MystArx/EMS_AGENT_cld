@@ -257,7 +257,7 @@ export default {
     async waitForBackend() {
       const poll = setInterval(async () => {
         try {
-          const r = await fetch('https://ems-ai-agent.up.railway.app/api/status')
+          const r = await fetch('https://ems.apollosupplychain.com/ai/api/status')
           const d = await r.json()
           this.systemStatus = d.message
 
@@ -398,7 +398,7 @@ export default {
       }
 
       try {
-        await fetch('https://ems-ai-agent.up.railway.app/api/feedback', {
+        await fetch('https://ems.apollosupplychain.com/ai/api/feedback', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(feedbackData)
@@ -488,7 +488,7 @@ export default {
 
       try {
         const r = await fetch(
-          'https://ems-ai-agent.up.railway.app/api/admin/correct-sql',
+          'https://ems.apollosupplychain.com/ai/api/admin/correct-sql',
           {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
