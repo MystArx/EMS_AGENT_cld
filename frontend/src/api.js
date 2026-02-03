@@ -2,7 +2,7 @@ import axios from 'axios';
 
 // Point to your FastAPI Backend
 const apiClient = axios.create({
-  baseURL: 'https://ems.apollosupplychain.com/ai/',
+  baseURL: 'https://ems.apollosupplychain.com/ai',
   headers: {
     'Content-Type': 'application/json',
   },
